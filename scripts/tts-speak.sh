@@ -3,8 +3,9 @@
 #
 # Usage:
 #   ./tts-speak.sh "Your text here"
-#   ./tts-speak.sh "Your text here" --no-play    # Generate only, don't play
-#   ./tts-speak.sh "Your text here" --speed 1.2  # Adjust speed
+#   ./tts-speak.sh "Your text here" --no-play          # Generate only, don't play
+#   ./tts-speak.sh "Your text here" --speed 1.2        # Adjust speed
+#   ./tts-speak.sh "Your text here" --max-tokens 2400  # Longer output (~200s)
 
 set -euo pipefail
 
@@ -17,6 +18,7 @@ MODEL="mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit"
 text=""
 play_audio=true
 speed=""
+max_tokens=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -26,6 +28,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --speed)
             speed="$2"
+            shift 2
+            ;;
+        --max-tokens)
+            max_tokens="$2"
             shift 2
             ;;
         *)
@@ -38,7 +44,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$text" ]]; then
-    echo "Usage: tts-speak.sh \"Your text here\" [--no-play] [--speed 1.0]"
+    echo "Usage: tts-speak.sh \"Your text here\" [--no-play] [--speed 1.0] [--max-tokens 1200]"
     exit 1
 fi
 
@@ -54,17 +60,24 @@ mkdir -p "$OUTPUT_DIR"
 # Activate venv
 source "${VENV_DIR}/bin/activate"
 
-output_file="${OUTPUT_DIR}/$(date +%s).wav"
+file_prefix="$(date +%s)"
+output_file="${OUTPUT_DIR}/${file_prefix}.wav"
 
 # Build command
-cmd=(python -m mlx_audio.cli.tts.generate
+cmd=(python -m mlx_audio.tts.generate
     --model "$MODEL"
     --text "$text"
     --ref_audio "$REF_AUDIO"
-    --output "$output_file")
+    --output_path "$OUTPUT_DIR"
+    --file_prefix "$file_prefix"
+    --join_audio)
 
 if [[ -n "$speed" ]]; then
     cmd+=(--speed "$speed")
+fi
+
+if [[ -n "$max_tokens" ]]; then
+    cmd+=(--max_tokens "$max_tokens")
 fi
 
 echo "Generating speech..."
