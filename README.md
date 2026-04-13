@@ -1,125 +1,102 @@
 # Voice Cloning & TTS System
 
-Local voice cloning and text-to-speech system for Mac Mini (Apple Silicon). Clone your voice from a short audio sample and generate natural speech — fully offline, no cloud, no API keys.
+Local voice cloning and text-to-speech system running on Mac Mini (Apple Silicon). Clone your voice from a short audio sample and generate natural speech — fully offline, no cloud, no API keys.
 
-## Stack
+## What's Installed
 
-- **[MimikaStudio](https://github.com/BoltzmannEntropy/MimikaStudio)** — GUI + REST API + MCP server for voice cloning, TTS, and audiobook generation
-- **[mlx-audio](https://github.com/Blaizzy/mlx-audio)** — CLI-based TTS using MLX (Metal GPU acceleration)
-- **Qwen3-TTS 1.7B** — Voice cloning from a 3-second sample
-- **Kokoro 82M** — Fast preset-voice TTS (<200ms latency)
-- **Chatterbox** — Multilingual TTS with emotional control
+Everything is already set up on this Mac Mini (M4, 24GB):
 
-## Requirements
+| Component | Location | Status |
+|---|---|---|
+| MimikaStudio (GUI + API) | `~/MimikaStudio/` | Installed (Python 3.12 venv) |
+| mlx-audio (CLI TTS) | `~/.voice-cloning/venv/` | Installed (Python 3.14 venv) |
+| Qwen3-TTS 1.7B Base (voice cloning) | `~/.voice-cloning/models/` | Downloaded (2.3GB) |
+| Qwen3-TTS 1.7B VoiceDesign | `~/.voice-cloning/models/` | Downloaded (2.2GB) |
+| Qwen3-TTS 1.7B CustomVoice | `~/.voice-cloning/models/` | Downloaded (2.2GB) |
+| ffmpeg, git-lfs, espeak-ng, sox | Homebrew | Installed |
 
-| Component | Requirement |
-|---|---|
-| Mac | Apple Silicon (M1/M2/M3/M4) — Intel not supported |
-| macOS | 14.0+ |
-| RAM | 16GB minimum, 24GB recommended |
-| Storage | ~10GB free for models + audio |
-| Python | 3.12 (MimikaStudio), 3.14 works for mlx-audio |
+## Getting Started
 
-## Quick Start
+### 1. Record your voice
 
-### 1. Clone and install
+Record a 5-10 second sample in a quiet room, speaking at a natural pace:
 
 ```bash
-git clone https://github.com/thotas/voice-cloning.git
-cd voice-cloning
-```
-
-### 2. Install system dependencies
-
-```bash
-brew install ffmpeg git-lfs espeak-ng sox python@3.12
-git lfs install
-```
-
-### 3. Create directory structure
-
-```bash
-mkdir -p ~/.voice-cloning/{samples,models,output/clips,output/audiobooks,scripts}
-```
-
-### 4. Set up mlx-audio (CLI TTS)
-
-```bash
-python3 -m venv ~/.voice-cloning/venv
-source ~/.voice-cloning/venv/bin/activate
-pip install mlx-audio
-```
-
-### 5. Install MimikaStudio
-
-```bash
-git clone https://github.com/BoltzmannEntropy/MimikaStudio.git ~/MimikaStudio
-cd ~/MimikaStudio
-
-# Create venv with Python 3.12 (kokoro requires <3.13)
-/opt/homebrew/bin/python3.12 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-pip install --no-deps chatterbox-tts==0.1.6
-```
-
-### 6. Download models (~7GB)
-
-```bash
-cd ~/.voice-cloning/models
-git clone https://huggingface.co/mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit
-git clone https://huggingface.co/mlx-community/Qwen3-TTS-12Hz-1.7B-VoiceDesign-8bit
-git clone https://huggingface.co/mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-8bit
-
-# Pull actual model weights (LFS)
-for d in Qwen3-TTS-12Hz-1.7B-*; do cd "$d" && git lfs pull && cd ..; done
-```
-
-### 7. Record your voice
-
-```bash
-# Copy scripts to ~/.voice-cloning/scripts/
-cp scripts/*.sh scripts/*.py ~/.voice-cloning/scripts/
-chmod +x ~/.voice-cloning/scripts/*
-
-# Record a 5-10 second sample (Ctrl+C to stop)
 ~/.voice-cloning/scripts/record-voice.sh
 ```
 
-Tips: quiet room, normal pace, read 5-10 sentences steadily.
+Press Enter to start, Ctrl+C to stop. The script saves to `~/.voice-cloning/samples/thota-reference.wav`.
 
-### 8. Generate speech
+### 2. Generate speech with your cloned voice
 
 ```bash
-# CLI — speaks with your cloned voice
-~/.voice-cloning/scripts/tts-speak.sh "Hello, this is my cloned voice."
+~/.voice-cloning/scripts/tts-speak.sh "Hello, this is my cloned voice speaking."
+```
 
-# Or via MimikaStudio GUI
+### 3. Or use MimikaStudio GUI
+
+```bash
 cd ~/MimikaStudio && source venv/bin/activate && python bin/mimika
 ```
 
+Then: AI Models → Voice Clone → upload your sample → type text → Generate.
+
 ## Scripts
 
-| Script | Purpose |
-|---|---|
-| `tts-speak.sh` | Generate and play TTS from text using your cloned voice |
-| `batch-tts.py` | Batch process a text file into multiple audio clips |
-| `record-voice.sh` | Record a voice reference sample with quality checks |
+All scripts are in `~/.voice-cloning/scripts/` and ready to use.
 
 ### tts-speak.sh
 
+Generate and play TTS from text using your cloned voice:
+
 ```bash
-./tts-speak.sh "Your text here"
-./tts-speak.sh "Your text here" --no-play    # Generate only
-./tts-speak.sh "Your text here" --speed 1.2  # Adjust speed
+~/.voice-cloning/scripts/tts-speak.sh "Your text here"
+~/.voice-cloning/scripts/tts-speak.sh "Your text here" --no-play    # Generate only
+~/.voice-cloning/scripts/tts-speak.sh "Your text here" --speed 1.2  # Adjust speed
 ```
 
 ### batch-tts.py
 
+Batch process a text file into audio clips:
+
 ```bash
-python batch-tts.py input.txt                    # One line = one clip
-python batch-tts.py input.txt --mode paragraph   # Split by blank lines
-python batch-tts.py input.txt --concat           # Merge all into one file
+source ~/.voice-cloning/venv/bin/activate
+python ~/.voice-cloning/scripts/batch-tts.py input.txt                    # One line = one clip
+python ~/.voice-cloning/scripts/batch-tts.py input.txt --mode paragraph   # Split by blank lines
+python ~/.voice-cloning/scripts/batch-tts.py input.txt --concat           # Merge into one file
+```
+
+### record-voice.sh
+
+Record a voice reference sample with duration check and quality tips:
+
+```bash
+~/.voice-cloning/scripts/record-voice.sh              # Default: thota-reference.wav
+~/.voice-cloning/scripts/record-voice.sh my-sample    # Custom name
+```
+
+## MimikaStudio REST API
+
+Start MimikaStudio, then use the API at `http://127.0.0.1:8080/api`:
+
+```bash
+# Voice clone TTS
+curl -X POST http://127.0.0.1:8080/api/tts/clone \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Text to speak.",
+    "reference_audio": "/Users/thota/.voice-cloning/samples/thota-reference.wav",
+    "model": "qwen3-tts-1.7b"
+  }'
+
+# Document to audiobook
+curl -X POST http://127.0.0.1:8080/api/jobs/audiobook \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source": "/Users/thota/Documents/book.pdf",
+    "voice_clone_ref": "/Users/thota/.voice-cloning/samples/thota-reference.wav",
+    "engine": "qwen3-tts"
+  }'
 ```
 
 ## Directory Layout
@@ -128,7 +105,7 @@ python batch-tts.py input.txt --concat           # Merge all into one file
 ~/.voice-cloning/
 ├── samples/               # Voice reference recordings
 │   └── thota-reference.wav
-├── models/                # Downloaded TTS models (~7GB)
+├── models/                # Qwen3-TTS models (~7GB)
 ├── output/
 │   ├── clips/             # Short TTS clips
 │   └── audiobooks/        # Full document conversions
@@ -136,37 +113,23 @@ python batch-tts.py input.txt --concat           # Merge all into one file
 └── venv/                  # Python virtualenv (mlx-audio)
 ```
 
-## MimikaStudio REST API
+## TTS Engines
+
+| Engine | Best For | Latency | Voice Cloning |
+|---|---|---|---|
+| Qwen3-TTS 1.7B | Natural narration, voice cloning | ~1-2s/sentence | Yes (3s sample) |
+| Kokoro 82M | Fast daily TTS, preset voices | <200ms | No |
+| Chatterbox | Multilingual, emotional control | Medium | Yes |
+
+## Remote Access (SSH)
+
+From another machine (e.g., a VPS):
 
 ```bash
-# Voice clone TTS
-curl -X POST http://127.0.0.1:8080/api/tts/clone \
-  -H "Content-Type: application/json" \
-  -d '{
-    "text": "Text to speak.",
-    "reference_audio": "~/.voice-cloning/samples/thota-reference.wav",
-    "model": "qwen3-tts-1.7b"
-  }'
-
-# Document to audiobook
-curl -X POST http://127.0.0.1:8080/api/jobs/audiobook \
-  -H "Content-Type: application/json" \
-  -d '{
-    "source": "~/Documents/book.pdf",
-    "voice_clone_ref": "~/.voice-cloning/samples/thota-reference.wav",
-    "engine": "qwen3-tts"
-  }'
+ssh thota@macmini.local 'bash ~/.voice-cloning/scripts/tts-speak.sh "Your text here."'
 ```
 
-## Performance
-
-| Metric | Value |
-|---|---|
-| Voice cloning quality | >0.85 similarity from 3s sample |
-| TTS latency (Kokoro) | <200ms |
-| TTS latency (Qwen3 1.7B) | ~1-2s per sentence |
-| RAM (Qwen3 1.7B) | ~3-4GB |
-| RAM (Kokoro) | ~500MB |
+Requires SSH enabled: System Settings → General → Sharing → Remote Login.
 
 ## Privacy
 
