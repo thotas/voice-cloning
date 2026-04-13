@@ -6,6 +6,7 @@
 #   ./tts-speak.sh "Your text here" --no-play          # Generate only, don't play
 #   ./tts-speak.sh "Your text here" --speed 1.2        # Adjust speed
 #   ./tts-speak.sh "Your text here" --max-tokens 2400  # Longer output (~200s)
+#   ./tts-speak.sh "Your text here" --ref ~/samples/other-voice.wav  # Use different voice
 
 set -euo pipefail
 
@@ -34,6 +35,10 @@ while [[ $# -gt 0 ]]; do
             max_tokens="$2"
             shift 2
             ;;
+        --ref)
+            REF_AUDIO="$2"
+            shift 2
+            ;;
         *)
             if [[ -z "$text" ]]; then
                 text="$1"
@@ -44,7 +49,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$text" ]]; then
-    echo "Usage: tts-speak.sh \"Your text here\" [--no-play] [--speed 1.0] [--max-tokens 1200]"
+    echo "Usage: tts-speak.sh \"Your text here\" [--no-play] [--speed 1.0] [--max-tokens 1200] [--ref voice.wav]"
     exit 1
 fi
 

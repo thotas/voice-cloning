@@ -54,9 +54,14 @@ Generate and play TTS from text using your cloned voice:
 ~/.voice-cloning/scripts/tts-speak.sh "Your text here" --no-play          # Generate only
 ~/.voice-cloning/scripts/tts-speak.sh "Your text here" --speed 1.2        # Adjust speed
 ~/.voice-cloning/scripts/tts-speak.sh "Your text here" --max-tokens 2400  # Longer output (~200s)
+~/.voice-cloning/scripts/tts-speak.sh "Your text here" --ref ~/.voice-cloning/samples/NarayanaThota-reference-10s.wav  # Use different voice
 ```
 
-Default `--max-tokens` is 1200 (~100s of audio at 12Hz). Increase for longer text passages. For best quality on long content, consider splitting into paragraph-sized chunks.
+Options:
+- `--ref <path>` — Reference voice audio (default: `thota-reference.wav`)
+- `--max-tokens <n>` — Max audio tokens, default 1200 (~100s at 12Hz)
+- `--speed <n>` — Speech speed multiplier (e.g., 1.2)
+- `--no-play` — Save audio without playing
 
 ### batch-tts.py
 
