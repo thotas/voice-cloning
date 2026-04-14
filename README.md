@@ -16,63 +16,56 @@ Everything is already set up on this Mac Mini (M4, 24GB):
 
 ## Quick Start
 
-### Record your voice (one time)
-
-```bash
-~/.voice-cloning/scripts/record-voice.sh
-```
-
-Press Enter to start, Ctrl+C to stop. Save to `~/.voice-cloning/samples/thota-reference.wav`.
-
 ### Generate speech with your cloned voice
 
 ```bash
-# Simple text
-~/.voice-cloning/scripts/tts-speak.sh "Hello, this is my cloned voice"
-
-# Use the new thota-voice-clone.py script
-~/.voice-cloning/venv/bin/python ~/.voice-cloning/scripts/thota-voice-clone.py "Hello world"
+# Use the shell wrapper (simplest)
+~/Development/Scripts/thota-voice-clone "Hello world"
 
 # From a text file
-~/.voice-cloning/venv/bin/python ~/.voice-cloning/scripts/thota-voice-clone.py /path/to/text.txt
+~/Development/Scripts/thota-voice-clone /path/to/text.txt
 
 # From markdown (strips formatting)
-~/.voice-cloning/venv/bin/python ~/.voice-cloning/scripts/thota-clone.py /path/to/file.md
+~/Development/Scripts/thota-voice-clone /path/to/file.md
 
-# From HTML (strips tags)
-~/.voice-cloning/venv/bin/python ~/.voice-cloning/scripts/thota-clone.py /path/to/file.html
+# Play after generation
+~/Development/Scripts/thota-voice-clone "Text" --play
 
-# Specify different reference voice
-~/.voice-cloning/venv/bin/python ~/.voice-cloning/scripts/thota-clone.py "Text" --ref ~/.voice-cloning/samples/other-voice.wav
+# Use a different reference voice
+~/Development/Scripts/thota-voice-clone "Text" --ref path/to/voice.wav
+
+# Custom output path
+~/Development/Scripts/thota-voice-clone "Text" --output /path/to/output.wav
 ```
 
 Output goes to `/tmp/thota_voice_<timestamp>.wav`.
 
+### Shell Wrapper Location
+
+```
+~/Development/Scripts/thota-voice-clone
+```
+
 ## Scripts
 
-### thota-voice-clone.py (NEW - Recommended)
+### thota-voice-clone.py
 
-Generate TTS from text, files, or URLs. Supports:
+**Recommended** — Generate TTS from text, files, or URLs. Supports:
 - Direct text input
 - `.txt` files
 - `.md` files (strips markdown)
 - `.html` files (strips HTML tags)
 
 ```bash
-# Basic usage
-~/.voice-cloning/venv/bin/python ~/.voice-cloning/scripts/thota-voice-clone.py "Your text here"
+# Via shell wrapper (easiest)
+~/Development/Scripts/thota-voice-clone "Your text here"
+~/Development/Scripts/thota-voice-clone input.txt
+~/Development/Scripts/thota-voice-clone /path/to/file.md
+~/Development/Scripts/thota-voice-clone "Text" --play
+~/Development/Scripts/thota-voice-clone "Text" --ref path/to/voice.wav
 
-# From file
-~/.voice-cloning/venv/bin/python ~/.voice-cloning/scripts/thota-voice-clone.py input.txt
-
-# With custom reference voice
-~/.voice-cloning/venv/bin/python ~/.voice-cloning/scripts/thota-voice-clone.py "Text" --ref path/to/voice.wav
-
-# Play after generation
-~/.voice-cloning/venv/bin/python ~/.voice-cloning/scripts/thota-voice-clone.py "Text" --play
-
-# Custom output path
-~/.voice-cloning/venv/bin/python ~/.voice-cloning/scripts/thota-voice-clone.py "Text" --output /path/to/output.wav
+# Via python directly
+~/.voice-cloning/venv/bin/python ~/.voice-cloning/scripts/thota-voice-clone.py "Text"
 ```
 
 ### tts-speak.sh
@@ -155,7 +148,7 @@ Record a voice reference sample:
 From another machine:
 
 ```bash
-ssh thota@macmini.local '~/.voice-cloning/venv/bin/python ~/.voice-cloning/scripts/thota-voice-clone.py "Text to speak"'
+ssh thota@macmini.local '~/Development/Scripts/thota-voice-clone "Text to speak"'
 ```
 
 Requires SSH enabled: System Settings → General → Sharing → Remote Login.
@@ -167,6 +160,9 @@ All processing is 100% local. Voice samples and generated audio never leave the 
 ## Directory Layout
 
 ```
+~/Development/Scripts/
+└── thota-voice-clone          # Shell wrapper for TTS
+
 ~/.voice-cloning/
 ├── samples/               # Voice reference recordings
 │   ├── thota-reference.wav
@@ -176,7 +172,7 @@ All processing is 100% local. Voice samples and generated audio never leave the 
 │   ├── clips/             # TTS clips
 │   └── audiobooks/
 ├── scripts/
-│   ├── thota-voice-clone.py  # NEW: Main TTS script
+│   ├── thota-voice-clone.py  # Main TTS script
 │   ├── tts-speak.sh          # Shell wrapper
 │   ├── batch-tts.py
 │   ├── record-voice.sh
