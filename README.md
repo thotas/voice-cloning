@@ -8,59 +8,90 @@ Everything is already set up on this Mac Mini (M4, 24GB):
 
 | Component | Location | Status |
 |---|---|---|
-| MimikaStudio (GUI + API) | `~/MimikaStudio/` | Installed (Python 3.12 venv) |
-| mlx-audio (CLI TTS) | `~/.voice-cloning/venv/` | Installed (Python 3.14 venv) |
-| Qwen3-TTS 1.7B Base (voice cloning) | `~/.voice-cloning/models/` | Downloaded (2.3GB) |
-| Qwen3-TTS 1.7B VoiceDesign | `~/.voice-cloning/models/` | Downloaded (2.2GB) |
-| Qwen3-TTS 1.7B CustomVoice | `~/.voice-cloning/models/` | Downloaded (2.2GB) |
-| ffmpeg, git-lfs, espeak-ng, sox | Homebrew | Installed |
+| MLX Audio (Qwen3-TTS) | `~/.voice-cloning/venv/` | Installed |
+| Qwen3-TTS 1.7B (voice cloning) | MLX model | Downloaded |
+| OmniVoice (multilingual) | `~/.voice-cloning/venv/` | Installed |
+| F5-TTS (voice prompting) | `~/.voice-cloning/venv/` | Installed |
+| ffmpeg, git-lfs, sox | Homebrew | Installed |
 
-## Getting Started
+## Quick Start
 
-### 1. Record your voice
-
-Record a 5-10 second sample in a quiet room, speaking at a natural pace:
+### Record your voice (one time)
 
 ```bash
 ~/.voice-cloning/scripts/record-voice.sh
 ```
 
-Press Enter to start, Ctrl+C to stop. The script saves to `~/.voice-cloning/samples/thota-reference.wav`.
+Press Enter to start, Ctrl+C to stop. Save to `~/.voice-cloning/samples/thota-reference.wav`.
 
-### 2. Generate speech with your cloned voice
-
-```bash
-~/.voice-cloning/scripts/tts-speak.sh "Hello, this is my cloned voice speaking."
-```
-
-### 3. Or use MimikaStudio GUI
+### Generate speech with your cloned voice
 
 ```bash
-cd ~/MimikaStudio && source venv/bin/activate && python bin/mimika
+# Simple text
+~/.voice-cloning/scripts/tts-speak.sh "Hello, this is my cloned voice"
+
+# Use the new thota-voice-clone.py script
+~/.voice-cloning/venv/bin/python ~/.voice-cloning/scripts/thota-voice-clone.py "Hello world"
+
+# From a text file
+~/.voice-cloning/venv/bin/python ~/.voice-cloning/scripts/thota-voice-clone.py /path/to/text.txt
+
+# From markdown (strips formatting)
+~/.voice-cloning/venv/bin/python ~/.voice-cloning/scripts/thota-clone.py /path/to/file.md
+
+# From HTML (strips tags)
+~/.voice-cloning/venv/bin/python ~/.voice-cloning/scripts/thota-clone.py /path/to/file.html
+
+# Specify different reference voice
+~/.voice-cloning/venv/bin/python ~/.voice-cloning/scripts/thota-clone.py "Text" --ref ~/.voice-cloning/samples/other-voice.wav
 ```
 
-Then: AI Models → Voice Clone → upload your sample → type text → Generate.
+Output goes to `/tmp/thota_voice_<timestamp>.wav`.
 
 ## Scripts
 
-All scripts are in `~/.voice-cloning/scripts/` and ready to use.
+### thota-voice-clone.py (NEW - Recommended)
+
+Generate TTS from text, files, or URLs. Supports:
+- Direct text input
+- `.txt` files
+- `.md` files (strips markdown)
+- `.html` files (strips HTML tags)
+
+```bash
+# Basic usage
+~/.voice-cloning/venv/bin/python ~/.voice-cloning/scripts/thota-voice-clone.py "Your text here"
+
+# From file
+~/.voice-cloning/venv/bin/python ~/.voice-cloning/scripts/thota-voice-clone.py input.txt
+
+# With custom reference voice
+~/.voice-cloning/venv/bin/python ~/.voice-cloning/scripts/thota-voice-clone.py "Text" --ref path/to/voice.wav
+
+# Play after generation
+~/.voice-cloning/venv/bin/python ~/.voice-cloning/scripts/thota-voice-clone.py "Text" --play
+
+# Custom output path
+~/.voice-cloning/venv/bin/python ~/.voice-cloning/scripts/thota-voice-clone.py "Text" --output /path/to/output.wav
+```
 
 ### tts-speak.sh
 
-Generate and play TTS from text using your cloned voice:
+Generate TTS from text using MLX Qwen3-TTS (fast, English-focused):
 
 ```bash
 ~/.voice-cloning/scripts/tts-speak.sh "Your text here"
 ~/.voice-cloning/scripts/tts-speak.sh "Your text here" --no-play          # Generate only
 ~/.voice-cloning/scripts/tts-speak.sh "Your text here" --speed 1.2        # Adjust speed
-~/.voice-cloning/scripts/tts-speak.sh "Your text here" --max-tokens 2400  # Longer output (~200s)
-~/.voice-cloning/scripts/tts-speak.sh "Your text here" --ref ~/.voice-cloning/samples/NarayanaThota-reference-10s.wav  # Use different voice
+~/.voice-cloning/scripts/tts-speak.sh "Your text here" --ref voice.wav   # Different voice
+~/.voice-cloning/scripts/tts-speak.sh "Telugu text" --engine omnivoice   # Multilingual
 ```
 
 Options:
 - `--ref <path>` — Reference voice audio (default: `thota-reference.wav`)
-- `--max-tokens <n>` — Max audio tokens, default 1200 (~100s at 12Hz)
-- `--speed <n>` — Speech speed multiplier (e.g., 1.2)
+- `--engine qwen3|omnivoice` — TTS engine (default: `qwen3`)
+- `--lang <language>` — Language for OmniVoice (auto-detect if omitted)
+- `--speed <n>` — Speech speed multiplier
 - `--no-play` — Save audio without playing
 
 ### batch-tts.py
@@ -69,72 +100,62 @@ Batch process a text file into audio clips:
 
 ```bash
 source ~/.voice-cloning/venv/bin/activate
-python ~/.voice-cloning/scripts/batch-tts.py input.txt                    # One line = one clip
-python ~/.voice-cloning/scripts/batch-tts.py input.txt --mode paragraph   # Split by blank lines
-python ~/.voice-cloning/scripts/batch-tts.py input.txt --concat           # Merge into one file
+python ~/.voice-cloning/scripts/batch-tts.py input.txt
+python ~/.voice-cloning/scripts/batch-tts.py input.txt --mode paragraph
+python ~/.voice-cloning/scripts/batch-tts.py input.txt --concat
 ```
 
 ### record-voice.sh
 
-Record a voice reference sample with duration check and quality tips:
+Record a voice reference sample:
 
 ```bash
-~/.voice-cloning/scripts/record-voice.sh              # Default: thota-reference.wav
-~/.voice-cloning/scripts/record-voice.sh my-sample    # Custom name
-```
-
-## MimikaStudio REST API
-
-Start MimikaStudio, then use the API at `http://127.0.0.1:8080/api`:
-
-```bash
-# Voice clone TTS
-curl -X POST http://127.0.0.1:8080/api/tts/clone \
-  -H "Content-Type: application/json" \
-  -d '{
-    "text": "Text to speak.",
-    "reference_audio": "/Users/thota/.voice-cloning/samples/thota-reference.wav",
-    "model": "qwen3-tts-1.7b"
-  }'
-
-# Document to audiobook
-curl -X POST http://127.0.0.1:8080/api/jobs/audiobook \
-  -H "Content-Type: application/json" \
-  -d '{
-    "source": "/Users/thota/Documents/book.pdf",
-    "voice_clone_ref": "/Users/thota/.voice-cloning/samples/thota-reference.wav",
-    "engine": "qwen3-tts"
-  }'
-```
-
-## Directory Layout
-
-```
-~/.voice-cloning/
-├── samples/               # Voice reference recordings
-│   └── thota-reference.wav
-├── models/                # Qwen3-TTS models (~7GB)
-├── output/
-│   ├── clips/             # Short TTS clips
-│   └── audiobooks/        # Full document conversions
-├── scripts/               # CLI tools
-└── venv/                  # Python virtualenv (mlx-audio)
+~/.voice-cloning/scripts/record-voice.sh
+~/.voice-cloning/scripts/record-voice.sh my-sample  # Custom name
 ```
 
 ## TTS Engines
 
-| Engine | Best For | Latency | Voice Cloning |
-|---|---|---|---|
-| Qwen3-TTS 1.7B | Natural narration, voice cloning | ~1-2s/sentence | Yes (3s sample) |
-| Kokoro 82M | Fast daily TTS, preset voices | <200ms | No |
-| Chatterbox | Multilingual, emotional control | Medium | Yes |
+| Engine | Best For | Languages | Voice Cloning | Speed |
+|---|---|---|---|---|
+| **MLX Qwen3-TTS** | Natural narration | 10 (EN, ZH, JA, KO, etc.) | Yes (3s+ sample) | Fastest |
+| **OmniVoice** | Multilingual + Indic | 600+ (Telugu, Hindi, etc.) | Yes (3-25s sample) | Medium |
+| **F5-TTS** | Voice prompting | Multi | Yes (zero-shot) | Slow |
+
+### Recommended engine by use case:
+- **English TTS with voice cloning** → MLX Qwen3-TTS (fastest, best quality)
+- **Telugu/Hindi/Indic languages** → OmniVoice
+- **Quick voice prompting** → F5-TTS
+
+## Reference Voices Available
+
+| File | Duration | Description |
+|---|---|---|
+| `thota-reference.wav` | ~52s | Primary voice for cloning |
+| `NarayanaThota-clean.wav` | ~9s | Dad's voice (Telugu) |
+
+## Voice Samples Location
+
+```
+~/.voice-cloning/samples/
+├── thota-reference.wav     # Your voice
+├── NarayanaThota-clean.wav # Dad's voice
+└── ...
+```
+
+## Generated Audio Location
+
+```
+/tmp/thota_voice_*.wav  # From thota-voice-clone.py
+~/.voice-cloning/output/clips/  # From tts-speak.sh
+```
 
 ## Remote Access (SSH)
 
-From another machine (e.g., a VPS):
+From another machine:
 
 ```bash
-ssh thota@macmini.local 'bash ~/.voice-cloning/scripts/tts-speak.sh "Your text here."'
+ssh thota@macmini.local '~/.voice-cloning/venv/bin/python ~/.voice-cloning/scripts/thota-voice-clone.py "Text to speak"'
 ```
 
 Requires SSH enabled: System Settings → General → Sharing → Remote Login.
@@ -142,3 +163,23 @@ Requires SSH enabled: System Settings → General → Sharing → Remote Login.
 ## Privacy
 
 All processing is 100% local. Voice samples and generated audio never leave the machine. No API keys or accounts required.
+
+## Directory Layout
+
+```
+~/.voice-cloning/
+├── samples/               # Voice reference recordings
+│   ├── thota-reference.wav
+│   └── NarayanaThota-clean.wav
+├── models/                # MLX/OmniVoice models
+├── output/
+│   ├── clips/             # TTS clips
+│   └── audiobooks/
+├── scripts/
+│   ├── thota-voice-clone.py  # NEW: Main TTS script
+│   ├── tts-speak.sh          # Shell wrapper
+│   ├── batch-tts.py
+│   ├── record-voice.sh
+│   └── omnivoice-generate.py
+└── venv/                  # Python virtualenv
+```
